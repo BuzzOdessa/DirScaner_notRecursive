@@ -83,7 +83,7 @@ void ScanDir_new(string dir)
 
     //var flSorted = fl.OrderBy(n => n, new CustomComparer() ).ToList();
     Console.WriteLine(GC.GetTotalMemory(false));
-    return;
+    //return;
     WriteToConsole(flSorted);
 
     void WriteToConsole(IOrderedEnumerable<FileNode> flSorted)
