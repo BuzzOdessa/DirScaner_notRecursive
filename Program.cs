@@ -6,7 +6,7 @@ Console.OutputEncoding = Encoding.UTF8; // Інакше українське "і
 
 
 
-Console.BufferHeight = 1000;
+//Console.BufferHeight = 1000;
 
 Console.WriteLine("The current buffer height is {0} rows.",
                    Console.BufferHeight);
@@ -79,13 +79,13 @@ void ScanDir_new(string dir)
 
     //var flSorted = fl.OrderBy(n => n, new CustomComparer() ).ToList();
     Console.WriteLine(GC.GetTotalMemory(false));
-    return;
+    //return;
     WriteToConsole(flSorted);
 
 
     void AddSubDir(List<FileNode> fileNodes, int scanLevel)
     { 
-      var roots = fileNodes.Where(x=> x.IsDirectory && x.Level== scanLevel).ToList();
+        var roots = fileNodes.Where(x=> x.IsDirectory && x.Level== scanLevel).ToList();
         foreach (var dir in roots)
         {
             string[] subDirs = Directory.GetDirectories(dir.Name + @"\", "*", SearchOption.TopDirectoryOnly);
