@@ -126,7 +126,7 @@ void ScanDir_new(string dir)
 
         }        
     }
-
+// Не используем. Плохо за счет LINQ  который плодит копии списков, жрет память и тормозит все шо может
     void AddSubDir(List<FileNode> fileNodes, int scanLevel)
     {
         Console.WriteLine($"Level={level} Память перед фильтрацией предыдущего уровня {GC.GetTotalMemory(false)}");
