@@ -1,4 +1,5 @@
 ﻿using DirScaner;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 
@@ -63,13 +64,16 @@ void ScanDir_new(string dir)
     Console.WriteLine($"Изначально занято памяти {GC.GetTotalMemory(false)}" );    
     // Заполняем полный список файлов
     bool doScan = true;
+    int  dirIndex = 0; // Индекс с которого начинается проверка каталогов
     while (doScan)
     {
-        int cnt = fl.Count;
-        AddSubDir(fl, ++level);
+        int prevCount = fl.Count;
+        //        AddSubDir(fl, ++level);        
+        AddSubDir_opt(fl, ++level, dirIndex);
+        dirIndex = prevCount - 1;
         Console.WriteLine($"Level={level} Память {GC.GetTotalMemory(false)}");
-        Console.WriteLine("Поколение fl = " + GC.GetGeneration(fl));
-        doScan = fl.Count > cnt;
+    //    Console.WriteLine("Поколение fl = " + GC.GetGeneration(fl));
+        doScan = fl.Count > prevCount;
     }
     
     var flSorted =
@@ -79,27 +83,8 @@ void ScanDir_new(string dir)
 
     //var flSorted = fl.OrderBy(n => n, new CustomComparer() ).ToList();
     Console.WriteLine(GC.GetTotalMemory(false));
-    //return;
+    return;
     WriteToConsole(flSorted);
-
-
-    void AddSubDir(List<FileNode> fileNodes, int scanLevel)
-    { 
-        var roots = fileNodes.Where(x=> x.IsDirectory && x.Level== scanLevel).ToList();
-        foreach (var dir in roots)
-        {
-            string[] subDirs = Directory.GetDirectories(dir.Name + @"\", "*", SearchOption.TopDirectoryOnly);
-            foreach (string subDir in subDirs)
-            {
-                fileNodes.Add(new FileNode(subDir, true, scanLevel + 1));
-            }
-
-            string[] files = Directory.GetFiles(dir.Name + @"\", "*", SearchOption.TopDirectoryOnly);
-            foreach (string file in files)
-                fileNodes.Add(new FileNode(file, false, scanLevel + 1));
-            //Console.WriteLine(" ".PadLeft((level - 1) * 3 + 1) + Path.GetFileName(f));
-        }
-    }
 
     void WriteToConsole(IOrderedEnumerable<FileNode> flSorted)
     {
@@ -115,4 +100,58 @@ void ScanDir_new(string dir)
                 Console.WriteLine(" ".PadLeft((info.Level - 1) * 3) + info.FileName);
         }
     }
+
+    // Обход каталогов предыдущего уровня. Оптимизирован. Исключено формирование промежуточного списка через LINQ 
+    void AddSubDir_opt(List<FileNode> fileNodes, int scanLevel,  int startIndex )
+    {
+        Console.WriteLine($"Level={level} Память перед фильтрацией предыдущего уровня {GC.GetTotalMemory(false)}");
+        var roots = fileNodes.Where(x => x.IsDirectory && x.Level == scanLevel).ToList();
+        int countBefore = fileNodes.Count;
+        
+        for (int i = startIndex; i<countBefore;i++) 
+        {
+            if (fileNodes[i].IsDirectory && fileNodes[i].Level == scanLevel)
+            {
+                var dir = fileNodes[i];
+                string[] subDirs = Directory.GetDirectories(dir.Name + @"\", "*", SearchOption.TopDirectoryOnly);
+                foreach (string subDir in subDirs)
+                {
+                    fileNodes.Add(new FileNode(subDir, true, scanLevel + 1));
+                }
+                
+                string[] files = Directory.GetFiles(dir.Name + @"\", "*", SearchOption.TopDirectoryOnly);
+                foreach (string file in files)
+                    fileNodes.Add(new FileNode(file, false, scanLevel + 1));
+            }
+
+        }        
+    }
+
+    void AddSubDir(List<FileNode> fileNodes, int scanLevel)
+    {
+        Console.WriteLine($"Level={level} Память перед фильтрацией предыдущего уровня {GC.GetTotalMemory(false)}");
+        var roots = fileNodes.Where(x=> x.IsDirectory && x.Level== scanLevel).ToList();
+        bool first = true;
+        foreach (var dir in roots)
+        {
+            if (first)
+            {
+                Console.WriteLine($"Level={level} Память после применения фильтрации предыдущего уровня {GC.GetTotalMemory(false)}");
+                first = false;
+            }
+             
+            string[] subDirs = Directory.GetDirectories(dir.Name + @"\", "*", SearchOption.TopDirectoryOnly);
+            foreach (string subDir in subDirs)
+            {
+                fileNodes.Add(new FileNode(subDir, true, scanLevel + 1));
+            }
+
+            string[] files = Directory.GetFiles(dir.Name + @"\", "*", SearchOption.TopDirectoryOnly);
+            foreach (string file in files)
+                fileNodes.Add(new FileNode(file, false, scanLevel + 1));
+            //Console.WriteLine(" ".PadLeft((level - 1) * 3 + 1) + Path.GetFileName(f));
+        }
+    }
+
+    
 }
